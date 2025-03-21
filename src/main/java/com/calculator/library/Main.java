@@ -2,6 +2,7 @@ package com.calculator.library;
 
 import com.calculator.library.basic.Calculator;
 
+import com.calculator.library.basic.CalculatorUI;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
@@ -12,14 +13,15 @@ import java.net.StandardSocketOptions;
 
 public class Main {
     public static void main(String[] args) {
-
-        // flatlaf design damit nicht alles so veraltet aussieht
         try {
             UIManager.setLookAndFeel(new FlatDarculaLaf());
-        } catch (UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("FlatLaf konnte nicht geladen werden.");
         }
 
-        new Calculator();
+        SwingUtilities.invokeLater(() -> {
+            Calculator calculator = new Calculator();
+            new CalculatorUI(calculator);
+        });
     }
 }
