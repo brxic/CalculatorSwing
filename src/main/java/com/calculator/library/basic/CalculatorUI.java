@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.math.BigDecimal;
 
 public class CalculatorUI {
     private JFrame frame;
@@ -16,7 +17,7 @@ public class CalculatorUI {
         // das fenster wird erstellt
         frame = new JFrame("Calculator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 400);
+        frame.setSize(350, 466);
         frame.setMinimumSize(new Dimension(260, 200));
         frame.setLayout(new BorderLayout());
 
@@ -43,7 +44,7 @@ public class CalculatorUI {
         // styles und clicklistener
         for (String text : buttons) {
             JButton button = new JButton(text);
-            button.setFont(new Font("Arial", Font.BOLD, 18));
+            button.setFont(new Font("Arial", Font.BOLD, 22));
             button.addActionListener(new ButtonClickListener());
             buttonPanel.add(button);
         }
@@ -57,21 +58,31 @@ public class CalculatorUI {
         public void actionPerformed(ActionEvent e) {
             String command = e.getActionCommand();
 
-            if (command.matches("[0-9]")) { // wenn der input von einem button mit 0-9 kommt
-                calculator.enterNumber(Integer.parseInt(command)); // nummer auslesen und weiterverwenden
-                display.setText(String.valueOf(calculator.getCurrentInput())); // nummer an resultatfeld geben
+            if (command.matches("[0-9\\.]")) { // wenn der input von einem button mit 0-9 kommt
+                calculator.enterNumber(command); // nummer auslesen und weiterverwenden
+                display.setText(calculator.getCurrentInput()); // nummer an resultatfeld geben
+            } else if (command.matches("[+\\-*/×÷]")) { // wenn der input von einem button mit den operatoren kommt
+                String op;
+                if (command.equals("×")) {
+                    op = "*";
+                } else if (command.equals("÷")) {
+                    op = "/";
+                } else {
+                    op = command;
+                }
 
-            } else if (command.matches("[+\\-×÷]")) { // wenn der input von einem button mit den operatoren kommt
-                calculator.setOperator(command); // verwendet den ausgelesenen operator
-                display.setText(""); // leert das eingabe feld fürs feeling (nicht zwingend nötig)
+                if (calculator.setOperator(op)) { // wenn ein operator eingegeben wurde
+                    display.setText(""); // leert das eingabe feld fürs feeling (nicht zwingend nötig)
+                }
 
             } else if (command.equals("=")) { // wenn das gleichzeichen gedrückt wird
                 try {
-                    double result = calculator.calculate(); // führt die berechnung durch
-                    display.setText(String.valueOf(result));
+                    BigDecimal result = calculator.calculate(); // berechnung des resultats
+                    display.setText(result.stripTrailingZeros().toPlainString()); // resultat anzeigen und runden
                 } catch (ArithmeticException ex) {
                     display.setText("Error");
                 }
+
             } else if (command.equals("CE")) { // wenn CE gedrückt wird
                 calculator.clearAll(); // führe eine löschung aller bisherigen rechnungnen durch
                 display.setText("");
@@ -81,6 +92,9 @@ public class CalculatorUI {
             } else if (command.equals("←")) { // wenn ← gedrückt wird
                 calculator.backspace(); // führe eine löschung der letzten eingabe durch
                 display.setText(String.valueOf(calculator.getCurrentInput()));
+            } else if (command.equals("+/-")) { // wenn +/- gedrückt wird
+                calculator.changeSign(); // vorzeichen ändern
+                display.setText(calculator.getCurrentInput()); // vorzeichen anwenden
             }
         }
     }

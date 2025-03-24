@@ -1,68 +1,108 @@
 package com.calculator.library.basic;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public class Calculator {
-    private double currentInput = 0;
-    private double previousInput = 0;
+    private BigDecimal currentInput = BigDecimal.ZERO;
+    private BigDecimal previousInput = BigDecimal.ZERO;
     private String operator = "";
     private boolean isNewInput = true;
+    private boolean operatorSet = false;
+    private StringBuilder inputBuffer = new StringBuilder();
 
-    public void enterNumber(double number) {
+
+    public void enterNumber(String input) {
         if (isNewInput) {
-            currentInput = number;
+            inputBuffer.setLength(0); // reset
             isNewInput = false;
-        } else {
-            currentInput = currentInput * 10 + number;
         }
+
+        // Nur ein Punkt erlaubt
+        if (input.equals(".") && inputBuffer.toString().contains(".")) return;
+
+        inputBuffer.append(input); // erweitert den nachkommastellen array um die letze eingegebene zahl resp deren string
+        currentInput = new BigDecimal(inputBuffer.toString());
     }
 
-    public void setOperator(String op) {
+    // Holt den Operator und gibt diesen an die Calculate Funktion weiter
+    public boolean setOperator(String op) {
+        if (operatorSet) {
+            return false;
+        }
         if (!operator.isEmpty()) {
             calculate();
         }
         previousInput = currentInput;
         operator = op;
         isNewInput = true;
+        operatorSet = true;
+        return true;
     }
 
-    public double calculate() {
+    // rechenregeln und funktion
+    public BigDecimal calculate() {
         switch (operator) {
-            case "+": // addition
-                currentInput = previousInput + currentInput;
+            case "+":
+                currentInput = previousInput.add(currentInput);
                 break;
-            case "-": // subtraktion
-                currentInput = previousInput - currentInput;
+            case "-":
+                currentInput = previousInput.subtract(currentInput);
                 break;
-            case "×": // multiplikation
-                currentInput = previousInput * currentInput;
+            case "*":
+                currentInput = previousInput.multiply(currentInput);
                 break;
-            case "÷": // division
-                if (currentInput == 0) { // regelung von nicht durch 0 rechnung
-                    throw new ArithmeticException("Division durch 0 ist nicht erlaubt.");
+            case "/":
+                if (currentInput.compareTo(BigDecimal.ZERO) == 0) {
+                    throw new ArithmeticException("Division durch 0");
                 }
-                currentInput = previousInput / currentInput;
+                currentInput = previousInput.divide(currentInput, 10, RoundingMode.HALF_UP); // runden
                 break;
         }
         operator = "";
+        isNewInput = true;
+        operatorSet = false;
+        inputBuffer = new StringBuilder(currentInput.stripTrailingZeros().toPlainString()); // entfernt unnötige nachkommastellen, wie viele 0
         return currentInput;
     }
 
-    public void clearAll() { // CE
-        currentInput = 0;
-        previousInput = 0;
+    // CE
+    public void clearAll() {
+        currentInput = BigDecimal.ZERO;
+        previousInput = BigDecimal.ZERO;
         operator = "";
         isNewInput = true;
+        operatorSet = false;
+        inputBuffer.setLength(0);
     }
 
-    public void clearCurrent() { // C
-        currentInput = 0;
+    // C
+    public void clearCurrent() {
+        currentInput = BigDecimal.ZERO;
         isNewInput = true;
+        inputBuffer.setLength(0);
     }
 
-    public void backspace() { // ←
-        currentInput = (int) (currentInput / 10);
+    // <-
+    public void backspace() {
+        if (inputBuffer.length() > 0) {
+            inputBuffer.deleteCharAt(inputBuffer.length() - 1);
+            if (inputBuffer.length() == 0 || inputBuffer.toString().equals("-")) {
+                currentInput = BigDecimal.ZERO;
+            } else {
+                currentInput = new BigDecimal(inputBuffer.toString());
+            }
+        }
     }
 
-    public double getCurrentInput() { // letzte eingabe
-        return currentInput;
+    // +/-
+    public void changeSign() {
+        currentInput = currentInput.negate();
+        inputBuffer = new StringBuilder(currentInput.stripTrailingZeros().toPlainString());
+    }
+
+    // Letzte eingegebene Zahl / die zahl die angezeigt wird
+    public String getCurrentInput() {
+        return inputBuffer.length() > 0 ? inputBuffer.toString() : "0";
     }
 }
