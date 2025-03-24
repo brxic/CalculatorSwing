@@ -18,6 +18,9 @@ public class Calculator {
             isNewInput = false;
         }
 
+        // Kein Punkt als erstes
+        if (input.equals(".") && inputBuffer.length() == 0) return;
+
         // Nur ein Punkt erlaubt
         if (input.equals(".") && inputBuffer.toString().contains(".")) return;
 

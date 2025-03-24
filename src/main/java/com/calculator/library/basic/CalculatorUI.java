@@ -17,8 +17,8 @@ public class CalculatorUI {
         // das fenster wird erstellt
         frame = new JFrame("Calculator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(350, 466);
-        frame.setMinimumSize(new Dimension(260, 200));
+        frame.setSize(350, 495);
+        frame.setMinimumSize(new Dimension(260, 210));
         frame.setLayout(new BorderLayout());
 
         // die anzeige wird zusammengestellt
@@ -53,6 +53,30 @@ public class CalculatorUI {
         frame.setVisible(true);
     }
 
+    private void highlightResult() {
+        // Aktuelle Hintergrundfarbe holen
+        Color originalColor = display.getBackground();
+
+        // Anzeige färben
+        display.setBackground(new Color(0.329f, 1f, 0f, 0.5f)); // grün
+
+        // Nach 1 Sekunde wieder zurück zur Originalfarbe
+        Timer timer = new Timer(1000, e -> display.setBackground(originalColor));
+        timer.setRepeats(false); // nur einmal ausführen
+        timer.start();
+    }
+
+    private void highlightError() {
+        Color originalColor = display.getBackground();
+
+        display.setBackground(new Color(1f,0f,0f,.5f ));
+
+        Timer timer = new Timer(1000, e -> display.setBackground(originalColor));
+        timer.setRepeats(false);
+        timer.start();
+    }
+
+
     // click -und actionlistener funktionen
     private class ButtonClickListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
@@ -79,7 +103,9 @@ public class CalculatorUI {
                 try {
                     BigDecimal result = calculator.calculate(); // berechnung des resultats
                     display.setText(result.stripTrailingZeros().toPlainString()); // resultat anzeigen und runden
+                    highlightResult();
                 } catch (ArithmeticException ex) {
+                    highlightError();
                     display.setText("Error");
                 }
 
