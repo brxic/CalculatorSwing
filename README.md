@@ -3,6 +3,8 @@
 A simple, user-friendly calculator built with Java Swing.  
 Supports all basic math operations and can be fully controlled with both mouse and keyboard.
 
+> **Note:** The project documentation and code comments are in German because this project was created as part of an assignment at Work in Switzerland.
+
 ## Features
 
 - Add, subtract, multiply, divide
@@ -13,7 +15,7 @@ Supports all basic math operations and can be fully controlled with both mouse a
 
 ## Special Things
 
-- Fully working keyboard input â€“ no mouse needed
+- Controlleable by keyboard or mouse
 - Handles errors like division by 0
 - Uses BigDecimal for accurate calculations
 
@@ -25,7 +27,7 @@ Supports all basic math operations and can be fully controlled with both mouse a
    javac Calculator.java CalculatorUI.java
    java com.calculator.library.basic.CalculatorUI
    ```
-3. Start calculating â€“ use mouse or just type!
+3. Start calculating and use mouse or just type!
 
 ## Future Ideas
 
