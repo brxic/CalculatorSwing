@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 
 public class CalculatorUI {
@@ -51,6 +52,7 @@ public class CalculatorUI {
 
         frame.add(buttonPanel, BorderLayout.CENTER);
         frame.setVisible(true);
+        setupKeyBindings();
     }
 
     private void highlightResult() {
@@ -80,49 +82,128 @@ public class CalculatorUI {
     // click -und actionlistener funktionen
     private class ButtonClickListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            String command = e.getActionCommand();
-
-            if (command.matches("[0-9\\.]")) { // wenn der input von einem button mit 0-9 kommt
-                calculator.enterNumber(command); // nummer auslesen und weiterverwenden
-                display.setText(calculator.getCurrentInput()); // nummer an resultatfeld geben
-            } else if (command.matches("[+\\-*/×÷]")) { // wenn der input von einem button mit den operatoren kommt
-                String op;
-                if (command.equals("×")) {
-                    op = "*";
-                } else if (command.equals("÷")) {
-                    op = "/";
-                } else {
-                    op = command;
-                }
-
-                if (calculator.setOperator(op)) { // wenn ein operator eingegeben wurde
-                    display.setText(""); // leert das eingabe feld fürs feeling (nicht zwingend nötig)
-                }
-
-            } else if (command.equals("=")) { // wenn das gleichzeichen gedrückt wird
-                try {
-                    BigDecimal result = calculator.calculate(); // berechnung des resultats
-                    display.setText(result.stripTrailingZeros().toPlainString()); // resultat anzeigen und runden
-                    highlightResult();
-                } catch (ArithmeticException ex) {
-                    highlightError();
-                    display.setText("Error");
-                }
-
-            } else if (command.equals("CE")) { // wenn CE gedrückt wird
-                calculator.clearAll(); // führe eine löschung aller bisherigen rechnungnen durch
-                display.setText("");
-            } else if (command.equals("C")) { // wenn C gedrückt wird
-                calculator.clearCurrent(); // führe eine löschung der derzeitigen rechnung durch
-                display.setText("");
-            } else if (command.equals("←")) { // wenn ← gedrückt wird
-                calculator.backspace(); // führe eine löschung der letzten eingabe durch
-                display.setText(String.valueOf(calculator.getCurrentInput()));
-            } else if (command.equals("+/-")) { // wenn +/- gedrückt wird
-                calculator.changeSign(); // vorzeichen ändern
-                display.setText(calculator.getCurrentInput()); // vorzeichen anwenden
-            }
+            handleInput(e.getActionCommand());
         }
     }
+
+    private void handleInput(String command) {
+        System.out.println("Input: '" + command + "'");
+        if (command.matches("[0-9\\.]")) {
+            calculator.enterNumber(command);
+            display.setText(calculator.getCurrentInput());
+        } else if (command.matches("[+\\-*/×÷]")) {
+            String op = switch (command) {
+                case "×" -> "*";
+                case "÷" -> "/";
+                default -> command;
+            };
+            if (calculator.setOperator(op)) {
+                display.setText("");
+            }
+        } else if (command.equals("=")) {
+            try {
+                BigDecimal result = calculator.calculate();
+                display.setText(result.stripTrailingZeros().toPlainString());
+                highlightResult();
+            } catch (ArithmeticException ex) {
+                highlightError();
+                display.setText("Error");
+            }
+        } else if (command.equals("CE")) {
+            calculator.clearAll();
+            display.setText("");
+        } else if (command.equals("C")) {
+            calculator.clearCurrent();
+            display.setText("");
+        } else if (command.equals("←")) {
+            calculator.backspace();
+            display.setText(calculator.getCurrentInput());
+        } else if (command.equals("+/-")) {
+            calculator.changeSign();
+            display.setText(calculator.getCurrentInput());
+        }
+    }
+
+    private void setupKeyBindings() {
+        JComponent rootPane = frame.getRootPane();
+        InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = rootPane.getActionMap();
+
+        // Zahlen (0–9) und Dezimalpunkt
+        for (int i = 0; i <= 9; i++) {
+            String num = String.valueOf(i);
+            inputMap.put(KeyStroke.getKeyStroke(num), num);
+            inputMap.put(KeyStroke.getKeyStroke("NUMPAD" + i), num);
+            actionMap.put(num, new AbstractAction() {
+                public void actionPerformed(ActionEvent e) {
+                    handleInput(num);
+                }
+            });
+        }
+
+        inputMap.put(KeyStroke.getKeyStroke('.'), ".");
+        inputMap.put(KeyStroke.getKeyStroke("DECIMAL"), ".");
+        actionMap.put(".", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                handleInput(".");
+            }
+        });
+
+        // Operatoren (+, -, *, /) – auch vom Numpad
+        String[] ops = {"+", "-", "*", "/"};
+        for (String op : ops) {
+            inputMap.put(KeyStroke.getKeyStroke(op), op); // normale Taste
+            String numpadKey = switch (op) {
+                case "+" -> "ADD";
+                case "-" -> "SUBTRACT";
+                case "*" -> "MULTIPLY";
+                case "/" -> "DIVIDE";
+                default -> null;
+            };
+            if (numpadKey != null) {
+                inputMap.put(KeyStroke.getKeyStroke(numpadKey), op); // Numpad-Taste
+            }
+            actionMap.put(op, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    handleInput(op);
+                }
+            });
+        }
+
+
+        // Enter
+        inputMap.put(KeyStroke.getKeyStroke("ENTER"), "=");
+        actionMap.put("=", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                handleInput("=");
+            }
+        });
+
+        // Backspace
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "←");
+        actionMap.put("←", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                handleInput("←");
+            }
+        });
+
+        // Shift für Vorzeichenwechsel
+        inputMap.put(KeyStroke.getKeyStroke("shift SHIFT"), "+/-");
+        actionMap.put("+/-", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                handleInput("+/-");
+            }
+        });
+
+        // Escape für CE
+        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), "CE");
+        actionMap.put("CE", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                handleInput("CE");
+            }
+        });
+    }
+
 }
 
