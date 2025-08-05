@@ -9,31 +9,51 @@ import java.math.BigDecimal;
 
 public class CalculatorUI {
     private JFrame frame;
+    private JPanel mainPanel;
     private JTextField display;
     private Calculator calculator;
 
     public CalculatorUI(Calculator calculator) {
-        this.calculator = calculator; // konstruktor
+        this.calculator = calculator;
+        initializeComponents();
+    }
 
-        // das fenster wird erstellt
+    // Für eigenständiges Fenster
+    public void showWindow() {
         frame = new JFrame("Calculator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(350, 495);
         frame.setMinimumSize(new Dimension(260, 210));
         frame.setLayout(new BorderLayout());
 
-        // die anzeige wird zusammengestellt
+        frame.add(display, BorderLayout.NORTH);
+        frame.add(createButtonPanel(), BorderLayout.CENTER);
+        frame.setVisible(true);
+        setupKeyBindings();
+    }
+
+    // Für Integration in andere UIs (Main mit Tabs)
+    public JPanel getMainPanel() {
+        if (mainPanel == null) {
+            mainPanel = new JPanel(new BorderLayout());
+            mainPanel.add(display, BorderLayout.NORTH);
+            mainPanel.add(createButtonPanel(), BorderLayout.CENTER);
+            setupKeyBindings();
+        }
+        return mainPanel;
+    }
+
+    private void initializeComponents() {
         display = new JTextField();
         display.setFont(new Font("Arial", Font.BOLD, 24));
         display.setHorizontalAlignment(JTextField.RIGHT);
         display.setEditable(false);
-        frame.add(display, BorderLayout.NORTH);
+    }
 
-        // button panel
+    private JPanel createButtonPanel() {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(5, 4));
 
-        // button bezeichnungnen
         String[] buttons = {
                 "CE", "C", "←", "÷",
                 "7", "8", "9", "×",
@@ -42,7 +62,6 @@ public class CalculatorUI {
                 "+/-", "0", ".", "="
         };
 
-        // styles und clicklistener
         for (String text : buttons) {
             JButton button = new JButton(text);
             button.setFont(new Font("Arial", Font.BOLD, 22));
@@ -50,36 +69,25 @@ public class CalculatorUI {
             buttonPanel.add(button);
         }
 
-        frame.add(buttonPanel, BorderLayout.CENTER);
-        frame.setVisible(true);
-        setupKeyBindings();
+        return buttonPanel;
     }
 
     private void highlightResult() {
-        // Aktuelle Hintergrundfarbe holen
         Color originalColor = display.getBackground();
-
-        // Anzeige färben
-        display.setBackground(new Color(0.329f, 1f, 0f, 0.5f)); // grün
-
-        // Nach 1 Sekunde wieder zurück zur Originalfarbe
-        Timer timer = new Timer(1000, e -> display.setBackground(originalColor));
-        timer.setRepeats(false); // nur einmal ausführen
-        timer.start();
-    }
-
-    private void highlightError() {
-        Color originalColor = display.getBackground();
-
-        display.setBackground(new Color(1f,0f,0f,.5f ));
-
+        display.setBackground(new Color(0.329f, 1f, 0f, 0.5f));
         Timer timer = new Timer(1000, e -> display.setBackground(originalColor));
         timer.setRepeats(false);
         timer.start();
     }
 
+    private void highlightError() {
+        Color originalColor = display.getBackground();
+        display.setBackground(new Color(1f, 0f, 0f, .5f));
+        Timer timer = new Timer(1000, e -> display.setBackground(originalColor));
+        timer.setRepeats(false);
+        timer.start();
+    }
 
-    // click -und actionlistener funktionen
     private class ButtonClickListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             handleInput(e.getActionCommand());
@@ -125,9 +133,11 @@ public class CalculatorUI {
     }
 
     private void setupKeyBindings() {
-        JComponent rootPane = frame.getRootPane();
-        InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = rootPane.getActionMap();
+        JComponent rootComponent = (frame != null) ? frame.getRootPane() : mainPanel;
+        if (rootComponent == null) return;
+
+        InputMap inputMap = rootComponent.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = rootComponent.getActionMap();
 
         // Zahlen (0–9) und Dezimalpunkt
         for (int i = 0; i <= 9; i++) {
@@ -152,7 +162,7 @@ public class CalculatorUI {
         // Operatoren (+, -, *, /) – auch vom Numpad
         String[] ops = {"+", "-", "*", "/"};
         for (String op : ops) {
-            inputMap.put(KeyStroke.getKeyStroke(op), op); // normale Taste
+            inputMap.put(KeyStroke.getKeyStroke(op), op);
             String numpadKey = switch (op) {
                 case "+" -> "ADD";
                 case "-" -> "SUBTRACT";
@@ -161,7 +171,7 @@ public class CalculatorUI {
                 default -> null;
             };
             if (numpadKey != null) {
-                inputMap.put(KeyStroke.getKeyStroke(numpadKey), op); // Numpad-Taste
+                inputMap.put(KeyStroke.getKeyStroke(numpadKey), op);
             }
             actionMap.put(op, new AbstractAction() {
                 @Override
@@ -170,7 +180,6 @@ public class CalculatorUI {
                 }
             });
         }
-
 
         // Enter
         inputMap.put(KeyStroke.getKeyStroke("ENTER"), "=");
@@ -204,6 +213,4 @@ public class CalculatorUI {
             }
         });
     }
-
 }
-
